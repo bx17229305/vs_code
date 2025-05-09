@@ -2,193 +2,67 @@
 #include <iostream>
 using namespace std;
 using ll = long long;
-const int N = 1e6 + 10;
-int n, t, m, k;
-int a[N];
-const int P = 20;
-int st[N][P + 1], dep[N];
-int cnt;
-int h[N];
-int stk[N];
-int isk[N];
-int fa[N];
-int dfn[N];
-int tag;
-int id;
-struct Edge
-{
-    int v, nx;
-} e[N * 2];
+const int N = 3e3 + 10;
+int mod = 1e9 + 7;
+int n, m, k;
+int inv2 = (mod + 1) / 2;
+#define get cin >>
+#define ex cout <<
+#define rp(i, j, k) for (int i = j; i <= k; i++)
+#define pr(i, j, k) for (int i = j; i >= k; i--)
+#define mild (r - l) / 2 + l
+#define paras int L, int R, int l, int r, int i
+#define ld i << 1
+#define rd i << 1 | 1
+#define vi vector<int>
+#define vl vector<ll>
+#define pb push_back
 
-void add(int u, int v)
-{
-    e[++cnt] = {v, h[u]};
-    h[u] = cnt;
-}
-
-void dfs1(int u, int f)
-{
-    fa[u] = f;
-    dep[u] = dep[f] + 1;
-    st[u][0] = f;
-    dfn[u] = ++id;
-    for (int i = 1; i <= P; i++)
-    {
-        st[u][i] = st[st[u][i - 1]][i - 1];
-    }
-
-    for (int ei = h[u]; ei; ei = e[ei].nx)
-    {
-        int v = e[ei].v;
-        if (v == f)
-            continue;
-        dfs1(v, u);
-    }
-}
-
-int getlca(int a, int b)
-{
-    if (dep[a] < dep[b])
-        swap(a, b);
-    for (int i = P; i >= 0; i--)
-    {
-        if (dep[st[a][i]] >= dep[b])
-            a = st[a][i];
-    }
-    if (a == b)
-        return a;
-    for (int i = P; i >= 0; i--)
-    {
-        if (st[a][i] != st[b][i])
-        {
-            a = st[a][i];
-            b = st[b][i];
-        }
-    }
-    return st[a][0];
-}
-
-bool cmp(int a, int b)
-{
-    return dfn[a] < dfn[b];
-}
-
-void build()
-{
-    cnt = 0;
-    int tp = 0;
-    sort(a, a + k, cmp);
-    stk[++tp] = 1;
-    if (a[0] != 1)
-        stk[++tp] = a[0];
-    for (int i = 1; i < k; i++)
-    {
-        int lca = getlca(a[i], stk[tp]);
-        if (lca == stk[tp])
-            stk[++tp] = a[i];
-        else
-        {
-            while (tp > 1 && dep[stk[tp - 1]] >= dep[lca])
-            {
-                add(stk[tp - 1], stk[tp]);
-                tp--;
-            }
-            if (stk[tp] != lca)
-            {
-                add(lca, stk[tp]);
-                stk[tp] = lca;
-                stk[++tp] = a[i];
-            }
-        }
-    }
-    while (tp > 1)
-    {
-        add(stk[tp - 1], stk[tp]);
-        tp--;
-    }
-}
-
-int dfs(int u, int f)
-{
-    int sum = 0;
-    if (isk[u])
-    {
-        for (int ei = h[u]; ei; ei = e[ei].nx)
-        {
-            int v = e[ei].v;
-            if (v == f)
-                continue;
-            sum += dfs(v, u);
-            if (isk[u] && isk[v] && fa[v] == u)
-                tag = 0;
-            if (isk[v])
-                sum++;
-            isk[v] = 0;
-        }
-    }
-    else
-    {
-        int c = 0;
-        for (int ei = h[u]; ei; ei = e[ei].nx)
-        {
-            int v = e[ei].v;
-            if (v == f)
-                continue;
-            if (isk[u] && isk[v] && fa[v] == u)
-                tag = 0;
-            sum += dfs(v, u);
-            if (isk[v])
-                c++;
-            isk[v] = 0;
-        }
-        if (c > 1)
-            sum++;
-    }
-    h[u] = 0;
-    return sum;
-}
-
+ll a[N];
+ll ps[N];
+ll smx[N], pmx[N];
 void solve()
 {
     cin >> n;
-    for (int i = 1, u, v; i < n; i++)
+    rp(i, 1, n)
     {
-        scanf("%d%d", &u, &v);
-        add(u, v);
-        add(v, u);
+        cin >> a[i];
+        ps[i] = ps[i - 1] + a[i];
     }
-    dep[0] = 0;
-    for (int i = 0; i <= P; i++)
+    smx[n + 1] = 0;
+    rp(k, 1, n - 2)
     {
-        st[0][i] = 0;
-    }
-    dfs1(1, 0);
-    int q;
-    cin >> q;
-    memset(h, 0, sizeof h);
-    while (q--)
-    {
-        cin >> k;
-        isk[1] = 0;
-        for (int i = 0; i < k; i++)
+        ll res = 0;
+        pr(i, n, 1)
         {
-            scanf("%d", &a[i]);
-            isk[a[i]] = 1;
+            if (n - i + 1 < k)
+                smx[i] = 0;
+            else
+                smx[i] = max(smx[i + 1], ps[i + k - 1] - ps[i - 1]);
         }
-        build();
-        tag = 1;
-        int res = dfs(1, 0);
-        if (!tag)
-            cout << -1 << "\n";
-        else
-            cout << res << "\n";
+        rp(i, 1, n)
+        {
+            if (i - k >= 0)
+                pmx[i] = max(pmx[i - 1], ps[i] - ps[i - k]);
+            else
+                pmx[i] = 0;
+        }
+        rp(i, 1, n)
+        {
+            res = max(res, max(pmx[i - 1], smx[i + 1]) - a[i]);
+        }
+        cout << res << " ";
     }
+    cout << max(ps[n] - a[1] - a[1], ps[n - 1] - a[n]) << " 0\n";
 }
 
-int main()
+signed main()
 {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
 
     int T = 1;
+    get T;
     while (T--)
     {
         solve();

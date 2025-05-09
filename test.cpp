@@ -1,116 +1,96 @@
-#include "bits/stdc++.h"
-#include <iostream>
+
+
+#include <bits/stdc++.h>
+
 using namespace std;
-using ll = long long;
-const int N = 2e3 + 10;
-int mod = 1e9 + 7;
-int n, m, k, p;
-#define get cin >>
-#define ex cout <<
-#define rep(i, j, k) for (int i = j; i <= k; i++)
-#define per(i, j, k) for (int i = j; i >= k; i--)
-int inv2 = (mod + 1) / 2;
-const int M = 100;
-int bit = 64;
-ll mat[N][M];
 
-void setbit(int i, int j, int v)
-{
-    j--;
-    int p = j / bit;
-    int q = j % bit;
-    mat[i][p] |= (ll)v << q;
-}
+const int N = 600001;
+const int MAXT = N * 22;
+const int BIT = 25;
+int n, m, eor;
+int root[N];
+int tree[MAXT][2];
+int pass[MAXT];
+int cnt = 0;
 
-int getbit(int i, int j)
+int insert(int num, int i)
 {
-    j--;
-    return mat[i][j / bit] >> (j % bit) & 1;
-}
-
-void eor(int j, int i)
-{
-    rep(k, 0, (p + 1) / bit)
+    int rt = ++cnt;
+    tree[rt][0] = tree[i][0];
+    tree[rt][1] = tree[i][1];
+    pass[rt] = pass[i] + 1;
+    for (int b = BIT, path, pre = rt, cur; b >= 0; b--, pre = cur)
     {
-        mat[j][k] ^= mat[i][k];
+        path = (num >> b) & 1;
+        i = tree[i][path];
+        cur = ++cnt;
+        tree[cur][0] = tree[i][0];
+        tree[cur][1] = tree[i][1];
+        pass[cur] = pass[i] + 1;
+        tree[pre][path] = cur;
     }
+    return rt;
 }
 
-int kth;
-
-void gauss(int n)
+int query(int num, int u, int v)
 {
-    kth = 0;
-    rep(i, 1, n)
+    int ans = 0;
+    for (int b = BIT, path, best; b >= 0; b--)
     {
-        int c = i;
-        rep(j, i, n)
+        path = (num >> b) & 1;
+        best = path ^ 1;
+        if (pass[tree[v][best]] > pass[tree[u][best]])
         {
-            if (getbit(j, i) == 1)
-            {
-                c = j;
-                break;
-            }
+            ans += 1 << b;
+            u = tree[u][best];
+            v = tree[v][best];
         }
-        kth = max(kth, c);
-        swap(mat[i], mat[c]);
-        if (getbit(i, i) == 0)
-            return;
-        rep(j, 1, n)
+        else
         {
-            if (getbit(j, i) == 0 || j == i)
-                continue;
-            eor(j, i);
+            u = tree[u][path];
+            v = tree[v][path];
         }
     }
+    return ans;
 }
 
-void solve()
-{
-    get n >> m;
-    p = max(n, m);
-    rep(i, 1, m)
-    {
-        string s;
-        int state;
-        get s >> state;
-        rep(j, 1, s.size())
-        {
-            setbit(i, j, s[j - 1] - '0');
-        }
-        setbit(i, p + 1, state);
-    }
-    gauss(p);
-    int sign = 1;
-    rep(i, 1, n)
-    {
-        if (getbit(i, i) == 0)
-            sign = 0;
-    }
-    if (!sign)
-        ex "Cannot Determine\n";
-    else
-    {
-        ex kth << "\n";
-        rep(i, 1, n)
-        {
-            if (getbit(i, p + 1) == 1)
-                ex "?y7M#";
-            else
-                ex "Earth";
-            ex "\n";
-        }
-    }
-}
-signed main()
+int main()
 {
     ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    int T = 1;
-
-    while (T--)
+    cin.tie(0);
+    cin >> n >> m;
+    eor = 0;
+    root[0] = insert(eor, 0);
+    for (int i = 1, num; i <= n; i++)
     {
-        solve();
+        cin >> num;
+        eor ^= num;
+        root[i] = insert(eor, root[i - 1]);
+    }
+    string op;
+    int x, y, z;
+    for (int i = 1; i <= m; i++)
+    {
+        cin >> op;
+        if (op == "A")
+        {
+            cin >> x;
+            eor ^= x;
+            n++;
+            root[n] = insert(eor, root[n - 1]);
+        }
+        else
+        {
+            cin >> x >> y >> z;
+            if (x == 1)
+            {
+                cout << query(eor ^ z, 0, root[y - 1]) << "\n";
+            }
+            else
+            {
+                cout << query(eor ^ z, root[x - 2], root[y - 1]) << "\n";
+            }
+        }
     }
     return 0;
 }

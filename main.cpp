@@ -1,78 +1,60 @@
-#include "bits/stdc++.h"
 #include <iostream>
+#include <algorithm>
 using namespace std;
-#define int long long
-using ll = long long;
-const int N = 1e6 + 10;
-int mod = 1e9 + 7;
-int n, m, k, p;
-#define get cin >>
-#define ex cout <<
-#define rep(i, j, k) for (int i = j; i <= k; i++)
-#define per(i, j, k) for (int i = j; i >= k; i--)
-int inv2 = (mod + 1) / 2;
+using ll = unsigned long long;
 
-int f[N], g[N];
+ll k, b, c, v;
 
-int inv(int n)
-{
-    ll base = n;
-    ll res = 1;
-    int q = p - 2;
-    while (q)
-    {
-        if (q & 1)
-            res = res * base % p;
-        base = base * base % p;
-        q >>= 1;
+// 统计满足 kx + b <= upper 的非负整数x的数量
+ll count_x(ll upper) {
+    if (b > upper) return 0;
+    ll max_x = (upper - b) / k;
+    if (max_x < 0) return 0;
+    return max_x + 1; // x从0到max_x
+}
+
+void solve() {
+    cin >> k >> b >> c >> v;
+    ll res = 0;
+    ll prefix = 0; // 已确定的高位前缀
+
+    for (int i = 63; i >= 0; --i) {
+        int bit_v = (v >> i) & 1;
+        int bit_c = (c >> i) & 1;
+        ll mask = 1ULL << i;
+
+        // 尝试将当前位设为0或1
+        for (int bit = 0; bit <= 1; ++bit) {
+            ll new_prefix = prefix | (bit << i);
+            ll px = k * new_prefix + b;
+            if ((px ^ c) > v) continue; // 超出限制，跳过
+
+            // 当前位异或结果是否严格小于v的对应位？
+            if ((bit ^ bit_c) < bit_v) {
+                // 后面可以任取，直接统计
+                ll upper = new_prefix | ((1ULL << i) - 1);
+                res += count_x(upper) - count_x(new_prefix - 1);
+            } else {
+                // 需要进一步限制后面的位
+                prefix = new_prefix;
+                break;
+            }
+        }
     }
-    return res;
+
+    // 检查最终prefix是否满足条件
+    if ((k * prefix + b ^ c) <= v) {
+        res += count_x(prefix) - count_x(prefix - 1);
+    }
+
+    cout << res << "\n";
 }
 
-void prepare(int n)
-{
-    f[0] = 1;
-    rep(i, 1, n)
-        f[i] = f[i - 1] * i % p;
-    g[0] = 1;
-    rep(i, 1, n)
-        g[i] = inv(f[i]);
-}
-
-int C(int n, int m)
-{
-    if (n < m)
-        return 0;
-    if (m == 0)
-        return 1;
-    return f[n] * g[m] * g[n - m] % p;
-}
-
-int lucas(int n, int m)
-{
-    if (n < m)
-        return 0;
-    if (m == 0)
-        return 1;
-    return lucas(n / p, m / p) * C(n % p, m % p) % p;
-}
-
-void solve()
-{
-    get n >> m >> p;
-    prepare(n + m);
-    int res = lucas(n + m, m);
-    ex res << "\n";
-}
-signed main()
-{
+int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
-    int T = 1;
-    get T;
-    while (T--)
-    {
-        solve();
-    }
+    int T;
+    cin >> T;
+    while (T--) solve();
     return 0;
 }

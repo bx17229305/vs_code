@@ -1,145 +1,54 @@
 #include "bits/stdc++.h"
+#include <iostream>
 using namespace std;
+#define int long long
 using ll = long long;
-const int N = 1e5 + 10;
-int n, q, k;
-int st[N], dfn[N], siz[N], fa[N], top[N], bigson[N],dep[N],stk[N], id;
-int head[N], nex[N<<1], to[N<<1], cnt;
-int res;
+const int N = 1e6 + 10;
+int mod = 1e9 + 7;
+int n, m, k;
+int inv2 = (mod + 1) / 2;
+#define get cin >>
+#define ex cout <<
+#define rp(i, j, k) for (int i = j; i <= k; i++)
+#define pr(i, j, k) for (int i = j; i >= k; i--)
+#define mild (r - l) / 2 + l
+#define paras int L, int R, int l, int r, int i
+#define ld i << 1
+#define rd i << 1 | 1
+#define vi vector<int>
+#define vl vector<ll>
+#define pb push_back
 
-void add(int u, int v) {
-    nex[++cnt] = head[u];
-    head[u] = cnt;
-    to[cnt] = v;
-}
+int a[N], f[N];
 
-void dfs1(int u, int f) {
-    fa[u] = f;
-    dfn[u] = ++id;
-    dep[u] = dep[f] + 1;
-    siz[u] = 1;
-    int w = 0;
-    for (int ei = head[u]; ei; ei = nex[ei]) {
-        int v = to[ei];
-        if (v != f) {
-            dfs1(v, u);
-            siz[u] += siz[v];
-            if (siz[v] > w) {
-                bigson[u] = v;
-                w = siz[v];
-            }
-        }
-    }
-}
-
-void dfs2(int u, int h) {
-    top[u] = h;
-    if (bigson[u] != -1) dfs2(bigson[u], h);
-    for (int ei = head[u]; ei; ei = nex[ei]) {
-        int v = to[ei];
-        if (v != fa[u] && v != bigson[u]) dfs2(v, v);
-    }
-}
-
-int LCA(int a, int b) {
-    while (top[a] != top[b]) {
-        if (dep[top[a]] < dep[top[b]]) swap(a, b);
-        a = fa[top[a]];
-    }
-    return dep[a] < dep[b] ? a : b;
-}
-
-void create() {
-    sort(st + 1, st + k + 1, [](int a, int b) { return dfn[a] < dfn[b]; });
-    int tp = 0;
-    stk[++tp] = 1;
-    for (int i = 1; i <= k; i++) {
-        if (st[i] == 1) continue;
-        int lca = LCA(st[i], stk[tp]);
-        if (lca != stk[tp]) {
-            while (tp > 1 && dep[stk[tp - 1]] >= dep[lca]) {
-                add(stk[tp], stk[tp - 1]);
-                tp--;
-            }
-            if (stk[tp - 1] != lca) {
-                add(lca, stk[tp]);
-                stk[tp] = lca;
-            } else {
-                add(stk[tp], stk[tp - 1]);
-                tp--;
-            }
-        }
-        stk[++tp] = st[i];
-    }
-    while (tp > 1) {
-        add(stk[tp], stk[tp - 1]);
-        tp--;
-    }
-}
-
-int dp(int u) {
-    int sum = 0;
-    for (int ei = head[u]; ei; ei = nex[ei]) {
-        int v = to[ei];
-        sum += dp(v);
-    }
-    if (siz[u]) {
-        res += sum;
-        return 1;
-    } else {
-        if (sum > 1) {
-            res++;
-            return 0;
-        }
-        return sum;
-    }
-}
-
-void cle1() {
-    cnt = 0;
-    fill(head, head + n + 1, 0);
-}
-
-void solve() {
+void solve()
+{
     cin >> n;
-    cle1();
-    for (int i = 1; i < n; i++) {
-        int u, v;
-        cin >> u >> v;
-        add(u, v);
-        add(v, u);
+    rp(i, 1, n)
+    {
+        cin >> a[i];
     }
-    dfs1(1, 0);
-    dfs2(1, 1);
-    cin >> q;
-    while (q--) {
-        cin >> k;
-        siz[1] = 0;
-        for (int i = 1; i <= k; i++) {
-            cin >> st[i];
-            siz[st[i]] = 1;
-        }
-        bool tag = true;
-        for (int i = 1; i <= k; i++) {
-            if (siz[fa[st[i]]]) {
-                cout << -1 << endl;
-                tag = false;
-                break;
-            }
-        }
-        if (tag) {
-            sort(st + 1, st + k + 1, [](int a, int b) { return dfn[a] < dfn[b]; });
-            create();
-            res = 0;
-            dp(1);
-            cout << res << endl;
-        }
+    rp(i, 1, n)
+    {
+        f[i] = f[i - 1] + a[i];
+        if (i >= 2)
+            f[i] = max(f[i - 2], f[i]);
+        if (i >= 3)
+            f[i] = max(f[i - 3], f[i]);
     }
+    cout << f[n] << "\n";
 }
 
-int main() {
-    ios::sync_with_stdio(false);
+signed main()
+{
+    ios_base::sync_with_stdio(false);
     cin.tie(nullptr);
-    solve();
+
+    int T = 1;
+    get T;
+    while (T--)
+    {
+        solve();
+    }
     return 0;
 }
